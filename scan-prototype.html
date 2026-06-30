@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLOQ – Scan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --nav-bg: #113263;
+  --page-bg: #eef2f8;
+  --surface: #ffffff;
+  --off-white: #e8e9eb;
+  --table-header: #f5f8fc;
+  --border: #c8d4e8;
+  --select-bg: #c8d4e8;
+  --text-primary: #0d1a2e;
+  --text-secondary: #3d526e;
+  --text-tertiary: #5c6e8a;
+  --text-light: #ffffff;
+  --text-light-secondary: #e8e9eb;
+  --btn-primary: #0d74ce;
+  --header-fill: #cecbec;
+  --font-sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-serif: 'IBM Plex Serif', Georgia, serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ── Nav ── */
+nav {
+  background: var(--nav-bg);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  position: relative;
+}
+.nav-logo { display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:18px;margin-right:auto; }
+.nav-logo-sq { width:15px;height:15px;background:#fff;border-radius:2px; }
+.nav-links { position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:32px; }
+.nav-link { color:var(--text-light-secondary);display:flex;align-items:center;gap:4px;font-size:14px;font-weight:500;cursor:pointer;padding-bottom:2px;border-bottom:2px solid transparent;white-space:nowrap; }
+.nav-link.active { color:#fff;border-bottom-color:#fff;padding-bottom:0; }
+.nav-user { display:flex;align-items:flex-end;gap:7px;margin-left:auto; }
+.nav-user-name { color:#fff;font-size:14px;font-weight:500; }
+.nav-user-email { font-size:12px;color:var(--text-light-secondary); }
+.avatar-svg { width:32px;height:32px; }
+
+/* ── Page header ── */
+.page-header { background:var(--page-bg);padding:20px 32px 0;flex-shrink:0; }
+.page-header-top { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px; }
+.page-title-block { display:flex;align-items:center;gap:8px; }
+.scan-icon { width:40px;height:40px;background:var(--header-fill);border-radius:1000px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.page-title { font-family:var(--font-serif);font-size:24px;font-weight:700;color:var(--text-primary);line-height:32px; }
+.page-subtitle { font-size:14px;color:var(--text-secondary);margin-top:4px; }
+.header-btns { display:flex;gap:24px;align-items:center; }
+.btn { display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;font-size:14px;font-weight:500;font-family:var(--font-sans);cursor:pointer;border:none;box-shadow:0 1px 0.5px rgba(0,0,0,0.1);transition:opacity 0.15s;white-space:nowrap; }
+.btn:hover { opacity:0.88; }
+.btn-primary { background:var(--btn-primary);color:#fff; }
+.btn-outline { background:var(--surface);border:1px solid var(--border);color:var(--btn-primary); }
+.breadcrumb-row { display:flex;align-items:center;justify-content:space-between;padding:12px 0 14px; }
+.breadcrumb { display:flex;align-items:center;gap:8px;font-size:14px;color:var(--text-secondary);font-weight:500; }
+.breadcrumb .batch-name { color:var(--text-primary);font-size:16px;font-weight:500;line-height:24px; }
+.total-count { font-size:12px;color:var(--text-secondary);font-weight:500; }
+
+/* ── Main ── */
+.main { flex:1;overflow:hidden;padding:0 32px 16px;display:flex;flex-direction:column; }
+.panel-wrap { flex:1;display:flex;flex-direction:column;border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+
+/* Header bar */
+.panel-header-row { display:grid;grid-template-columns:211px 1fr 380px;background:var(--table-header);border-bottom:1px solid var(--border);flex-shrink:0;height:48px;box-shadow:0 1px 1.5px rgba(0,0,0,0.1); }
+.ph-cell { display:flex;align-items:center;padding:0 20px; }
+.ph-cell+.ph-cell { border-left:1px solid var(--border); }
+.ph-label { font-size:12px;font-weight:500;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.01em; }
+.ph-cell-pages { display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-left:1px solid var(--border); }
+.ph-cell-preview { display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-left:1px solid var(--border); }
+.ph-preview-icons { display:flex;align-items:center;gap:16px;color:var(--text-tertiary); }
+.ph-preview-icons svg { width:20px;height:20px;cursor:pointer; }
+.add-to-doc-btn { display:flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:var(--btn-primary);background:none;border:none;cursor:pointer;padding:0;font-family:var(--font-sans);white-space:nowrap;position:relative; }
+.add-to-doc-btn:disabled { color:var(--text-tertiary);cursor:not-allowed; }
+.add-to-doc-btn:hover:not(:disabled) { opacity:0.8; }
+
+/* Body row */
+.panel-body-row { flex:1;display:grid;grid-template-columns:211px 1fr 380px;overflow:hidden; }
+.panel-col { background:var(--surface);overflow:hidden;display:flex;flex-direction:column; }
+.panel-col+.panel-col { border-left:1px solid var(--border); }
+.col-preview { background:var(--off-white); }
+
+/* ── Documents list ── */
+.doc-list { padding:20px 12px;display:flex;flex-direction:column;gap:12px; }
+.doc-unassigned { display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--select-bg);border-radius:8px;cursor:pointer; }
+.doc-unassigned span { font-size:14px;font-weight:500;color:var(--text-primary);white-space:nowrap; }
+.doc-divider { height:1px;background:var(--border); }
+.doc-items { display:flex;flex-direction:column;gap:6px; }
+
+.doc-folder {
+  display:flex;align-items:flex-start;justify-content:space-between;
+  padding:8px 12px;border-radius:8px;background:var(--surface);cursor:pointer;
+  transition:background 0.15s, border 0.15s, box-shadow 0.15s;
+  border:2px solid transparent;
+  position:relative;
+}
+.doc-folder:hover { background:var(--table-header); }
+.doc-folder.drop-target {
+  background:#daeeff;
+  border-color:var(--btn-primary);
+  box-shadow:0 0 0 3px rgba(13,116,206,0.15);
+}
+.doc-folder.drop-accept {
+  animation: acceptPulse 0.35s ease-out;
+}
+@keyframes acceptPulse {
+  0%   { background:#daeeff; box-shadow:0 0 0 6px rgba(13,116,206,0.25); }
+  100% { background:var(--surface); box-shadow:none; }
+}
+.doc-folder-inner { display:flex;align-items:flex-start;gap:8px; }
+.doc-folder-inner svg { flex-shrink:0;margin-top:2px; }
+.doc-item-name { font-size:14px;font-weight:500;color:var(--text-secondary);line-height:20px; }
+.doc-item-count { font-size:12px;color:var(--text-tertiary);line-height:16px; }
+
+/* ── Pages area ── */
+.pages-hints-row { display:flex;align-items:center;justify-content:space-between;padding:8px 20px;flex-shrink:0;font-size:12px;color:var(--text-tertiary); }
+.pages-hints-row .sel-count { font-weight:500;color:var(--text-secondary); }
+
+/* Grid container — position:relative for rubber-band overlay */
+.pages-grid-wrap {
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  padding:4px 20px 20px;
+  position:relative;
+}
+.pages-flex {
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px;
+}
+
+/* Individual page thumb */
+.page-thumb {
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:6px;border-radius:8px;background:var(--surface);
+  cursor:pointer;flex-shrink:0;
+  border:2px solid transparent;
+  /* NO opacity/transform here — managed inline for FLIP & dissolve */
+  transition: background 0.1s, border-color 0.1s;
+  will-change: transform, opacity;
+}
+.page-thumb:hover:not(.selected):not(.previewing) { background:var(--table-header); }
+.page-thumb.previewing {
+  background:#edf5ff;
+  border-color:#93c5fd;
+}
+.page-thumb.selected {
+  background:#daeeff;
+  border-color:var(--btn-primary);
+}
+.page-thumb.selected.previewing {
+  background:#daeeff;
+  border-color:var(--btn-primary);
+}
+/* Dissolve: CSS transition applied only to these properties, inline style overrides transform */
+.page-thumb.dissolving {
+  pointer-events: none;
+  transition: opacity 0.24s ease-out, transform 0.24s ease-out !important;
+  opacity: 0 !important;
+  transform: scale(0.72) !important;
+}
+
+/* Document thumbnail image */
+.thumb-img {
+  width:55px;height:70px;
+  border:1px solid var(--border);background:#fff;
+  overflow:hidden;position:relative;flex-shrink:0;
+  pointer-events:none;
+}
+.thumb-img-inner {
+  position:absolute;inset:0;padding:5px 4px 4px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.tl { height:2.5px;border-radius:1px;background:#93b4d4; }
+.tl.short { width:60%; }
+.tl.xshort { width:40%;background:#b0c4d8; }
+.tl.body { background:#ccd9e8;height:2px; }
+.thumb-label { font-size:12px;font-weight:500;color:var(--text-secondary);white-space:nowrap;pointer-events:none; }
+
+/* ── Rubber band ── */
+.rubber-band {
+  position:absolute;
+  border:1.5px solid var(--btn-primary);
+  background:rgba(13,116,206,0.07);
+  pointer-events:none;
+  z-index:40;
+  border-radius:3px;
+  display:none;
+}
+
+/* ── Drag ghost ── */
+#dragGhost {
+  position:fixed;
+  pointer-events:none;
+  z-index:500;
+  display:none;
+}
+.ghost-stack {
+  position:relative;
+  width:55px;height:70px;
+}
+.ghost-card {
+  position:absolute;
+  width:55px;height:70px;
+  background:#fff;
+  border:1.5px solid var(--btn-primary);
+  border-radius:4px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.18);
+  overflow:hidden;
+}
+.ghost-card:nth-child(1) { transform:rotate(-3deg) translate(-4px,2px);z-index:1; }
+.ghost-card:nth-child(2) { transform:rotate(1.5deg) translate(2px,-1px);z-index:2; }
+.ghost-card:nth-child(3) { transform:rotate(0deg);z-index:3; }
+.ghost-badge {
+  position:absolute;top:-6px;right:-8px;
+  background:var(--btn-primary);color:#fff;
+  font-size:11px;font-weight:700;
+  font-family:var(--font-sans);
+  border-radius:100px;
+  padding:1px 6px;
+  z-index:10;
+  box-shadow:0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* ── Dropdown ── */
+.dropdown-wrap { position:relative; }
+.dropdown-menu {
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.14);
+  min-width:230px;z-index:100;overflow:hidden;display:none;
+}
+.dropdown-menu.open { display:block; }
+.dd-section-title { font-size:10px;font-weight:600;color:var(--text-tertiary);letter-spacing:0.06em;padding:10px 14px 4px;text-transform:uppercase; }
+.dd-item { display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-secondary);transition:background 0.1s; }
+.dd-item:hover { background:var(--table-header); }
+.dd-item svg { flex-shrink:0;color:var(--text-tertiary); }
+.dd-divider { height:1px;background:var(--border);margin:4px 0; }
+.dd-count { margin-left:auto;font-size:11px;color:var(--text-tertiary); }
+
+/* ── Modal ── */
+.modal-overlay { position:fixed;inset:0;background:rgba(13,26,46,0.45);z-index:200;display:none;align-items:center;justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface);border-radius:12px;padding:28px;width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.18); }
+.modal-title { font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:4px; }
+.modal-subtitle { font-size:13px;color:var(--text-secondary);margin-bottom:20px; }
+.modal-label { font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;display:block; }
+.modal-input { width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:var(--font-sans);color:var(--text-primary);outline:none;margin-bottom:20px;transition:border-color 0.15s;background:var(--surface); }
+.modal-input:focus { border-color:var(--btn-primary); }
+.modal-footer { display:flex;justify-content:flex-end;gap:12px; }
+
+/* ── Preview ── */
+.preview-inner { height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px; }
+.preview-empty-icon { width:40px;height:40px;background:var(--surface);border-radius:100px;display:flex;align-items:center;justify-content:center; }
+.preview-empty-text { font-size:14px;font-weight:500;color:var(--text-tertiary);text-align:center;max-width:160px;line-height:1.5; }
+.preview-doc-wrap { display:flex;flex-direction:column;align-items:center;gap:8px; }
+.preview-doc { width:160px;height:210px;border:1px solid var(--border);background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.1);overflow:hidden;position:relative;padding:10px 8px 8px;display:flex;flex-direction:column;gap:3px; }
+.pl { height:3px;border-radius:1px;background:#93b4d4; }
+.pl.short { width:55%; }
+.pl.body { background:#dce8f2;height:2px; }
+.pl.gap { height:4px;background:transparent; }
+.preview-label { font-size:12px;color:var(--text-tertiary);font-weight:500;text-align:center; }
+
+/* ── Toast ── */
+.toast { position:fixed;bottom:24px;right:24px;background:var(--text-primary);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:500;z-index:400;opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s;pointer-events:none; }
+.toast.show { opacity:1;transform:none; }
+
+/* ── Drag-over hint on doc list ── */
+.dragging-active .doc-folder:not(.drop-target) { opacity:0.7; }
+.dragging-active .doc-unassigned { opacity:0.4; }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <div class="nav-logo"><div class="nav-logo-sq"></div>FLOQ</div>
+  <div class="nav-links">
+    <div class="nav-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.75"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-link active">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.88.18-1.33C18 2.53 15.64 1 13.5 1c-1.4 0-2.51.8-3.5 2.13C9.01 1.8 7.9 1 6.5 1 4.36 1 2 2.53 2 4.67c0 .45.11.89.18 1.33H0v14h24V6h-4z"/></svg>
+      Batches
+    </div>
+    <div class="nav-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.75"><path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/></svg>
+      Projects
+    </div>
+    <div class="nav-link">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.75"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </div>
+  </div>
+  <div class="nav-user">
+    <div>
+      <div class="nav-user-name">BPO Operator</div>
+      <div class="nav-user-email">piyush.fv@adv.io</div>
+    </div>
+    <svg class="avatar-svg" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#1e4080"/><path d="M16 17c2.5 0 4.5-2 4.5-4.5S18.5 8 16 8s-4.5 2-4.5 4.5S13.5 17 16 17zm0 2c-3 0-9 1.5-9 4.5V26h18v-2.5c0-3-6-4.5-9-4.5z" fill="#b0c8e8"/></svg>
+  </div>
+</nav>
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="page-header-top">
+    <div class="page-title-block">
+      <div class="scan-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="#4c3fb0"><path d="M3 5H1v16c0 1.1.9 2 2 2h16v-2H3V5zm18-4H7c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 16H7V3h14v14z"/></svg>
+      </div>
+      <div>
+        <div class="page-title">Scan</div>
+        <div class="page-subtitle">Scan pages and create new documents.</div>
+      </div>
+    </div>
+    <div class="header-btns">
+      <button class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Documents
+      </button>
+      <button class="btn btn-outline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Changes
+      </button>
+    </div>
+  </div>
+  <div class="breadcrumb-row">
+    <div class="breadcrumb">
+      <span>SXM_Demo</span><span>/</span>
+      <span class="batch-name">Batchname123</span>
+    </div>
+    <div class="total-count" id="totalCount">Total <strong>24</strong> pages imported</div>
+  </div>
+</div>
+
+<!-- Panels -->
+<div class="main">
+ <div class="panel-wrap">
+
+  <!-- Header bar -->
+  <div class="panel-header-row">
+    <div class="ph-cell"><span class="ph-label">Documents</span></div>
+    <div class="ph-cell-pages">
+      <span class="ph-label">Unassigned Pages</span>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <span style="font-size:12px;color:var(--text-tertiary);" id="selHint"></span>
+        <div class="dropdown-wrap">
+          <button class="add-to-doc-btn" id="addBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add To Document
+          </button>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <div class="dd-section-title">Action</div>
+            <div class="dd-item" id="createNewBtn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              Create New Document
+            </div>
+            <div class="dd-divider"></div>
+            <div class="dd-section-title">Add to Existing</div>
+            <div id="existingDocItems"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ph-cell-preview">
+      <span class="ph-label">Preview</span>
+      <div class="ph-preview-icons">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.26"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="panel-body-row">
+
+    <!-- Documents col -->
+    <div class="panel-col">
+      <div class="doc-list" id="docList"></div>
+    </div>
+
+    <!-- Pages col -->
+    <div class="panel-col" style="position:relative;">
+      <div class="pages-hints-row">
+        <span>Click to preview · Shift+click or drag to select</span>
+        <span class="sel-count" id="selCount"></span>
+      </div>
+      <div class="pages-grid-wrap" id="gridWrap">
+        <div class="pages-flex" id="pagesGrid"></div>
+        <div class="rubber-band" id="rubberBand"></div>
+      </div>
+    </div>
+
+    <!-- Preview col -->
+    <div class="panel-col col-preview">
+      <div class="preview-inner" id="previewBody"></div>
+    </div>
+
+  </div>
+ </div>
+</div>
+
+<!-- Drag ghost -->
+<div id="dragGhost">
+  <div class="ghost-stack">
+    <div class="ghost-card">
+      <div style="padding:5px 4px 4px;display:flex;flex-direction:column;gap:2px;">
+        <div class="tl" style="width:80%"></div><div class="tl short"></div>
+        <div class="tl body" style="width:95%"></div><div class="tl body" style="width:80%"></div>
+        <div class="tl body xshort"></div>
+      </div>
+    </div>
+    <div class="ghost-card">
+      <div style="padding:5px 4px 4px;display:flex;flex-direction:column;gap:2px;">
+        <div class="tl" style="width:75%"></div><div class="tl short"></div>
+        <div class="tl body" style="width:90%"></div>
+      </div>
+    </div>
+    <div class="ghost-card">
+      <div style="padding:5px 4px 4px;display:flex;flex-direction:column;gap:2px;">
+        <div class="tl" style="width:70%"></div>
+        <div class="tl body" style="width:85%"></div>
+      </div>
+    </div>
+    <div class="ghost-badge" id="ghostBadge">3</div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">Create New Document</div>
+    <div class="modal-subtitle" id="modalSubtitle"></div>
+    <label class="modal-label" for="docNameInput">Document name</label>
+    <input class="modal-input" id="docNameInput" type="text" />
+    <div class="modal-footer">
+      <button class="btn btn-outline" id="modalCancel">Cancel</button>
+      <button class="btn btn-primary" id="modalConfirm">Create Document</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ───────────────────────────────────────────────
+const PAGE_LABELS = Array.from({length: 24}, (_, i) => `Image ${i+1}`);
+
+const state = {
+  pages: Array.from({length: 24}, (_, i) => ({
+    id: i + 1,
+    label: PAGE_LABELS[i],
+    selected: false,
+  })),
+  documents: [
+    { id: 1, name: 'Document 1', pageCount: 30 },
+    { id: 2, name: 'Document 2', pageCount: 40 },
+  ],
+  nextDocId: 3,
+  previewId: null,
+};
+
+// ─── Thumb HTML ───────────────────────────────────────────
+function thumbHTML() {
+  return `<div class="thumb-img"><div class="thumb-img-inner">
+    <div class="tl" style="width:80%"></div><div class="tl short"></div>
+    <div class="tl body" style="width:95%"></div><div class="tl body" style="width:85%"></div>
+    <div class="tl body xshort"></div><div class="tl body" style="width:90%"></div>
+    <div class="tl body" style="width:75%"></div>
+    <div class="tl" style="width:60%;margin-top:2px"></div><div class="tl xshort"></div>
+    <div class="tl body" style="width:88%"></div><div class="tl body" style="width:70%"></div>
+  </div></div>`;
+}
+
+// ─── Render doc list ─────────────────────────────────────
+function renderDocList() {
+  document.getElementById('docList').innerHTML = `
+    <div class="doc-unassigned">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4c3fb0" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Unassigned Pages</span>
+    </div>
+    <div class="doc-divider"></div>
+    <div class="doc-items">
+      ${state.documents.map(doc => `
+        <div class="doc-folder" data-doc-id="${doc.id}">
+          <div class="doc-folder-inner">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5c6e8a" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <div>
+              <div class="doc-item-name">${doc.name}</div>
+              <div class="doc-item-count" id="doc-count-${doc.id}">${doc.pageCount} pages</div>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('totalCount').innerHTML = `Total <strong>${state.pages.length}</strong> pages imported`;
+}
+
+// ─── Render pages grid ───────────────────────────────────
+function renderPages() {
+  const grid = document.getElementById('pagesGrid');
+  if (!state.pages.length) {
+    grid.innerHTML = `<div style="padding:40px 0;color:var(--text-tertiary);font-size:13px;">No unassigned pages remaining.</div>`;
+    return;
+  }
+  grid.innerHTML = state.pages.map(p => `
+    <div class="page-thumb${p.selected ? ' selected' : ''}${state.previewId === p.id ? ' previewing' : ''}"
+         data-id="${p.id}">
+      ${thumbHTML()}
+      <div class="thumb-label">${p.label}</div>
+    </div>
+  `).join('');
+  attachThumbListeners();
+}
+
+function renderSelCount() {
+  const sel = state.pages.filter(p => p.selected);
+  const el = document.getElementById('selCount');
+  const hint = document.getElementById('selHint');
+  const addBtn = document.getElementById('addBtn');
+  if (sel.length > 0) {
+    el.textContent = `${sel.length} page${sel.length > 1 ? 's' : ''} selected`;
+    hint.textContent = `Drag to a document →`;
+    addBtn.disabled = false;
+  } else {
+    el.textContent = '';
+    hint.textContent = '';
+    addBtn.disabled = true;
+  }
+}
+
+function renderPreview() {
+  const body = document.getElementById('previewBody');
+  const page = state.pages.find(p => p.id === state.previewId);
+  if (page) {
+    body.innerHTML = `
+      <div class="preview-doc-wrap">
+        <div class="preview-doc">
+          <div class="pl" style="width:78%"></div><div class="pl short"></div>
+          <div class="pl gap"></div>
+          ${Array.from({length: 14}, (_, i) => `<div class="pl body" style="width:${i%5===4?55:92-(i*3%15)}%"></div>`).join('')}
+          <div class="pl gap"></div>
+          <div class="pl" style="width:62%"></div><div class="pl short"></div>
+          ${Array.from({length: 6}, (_, i) => `<div class="pl body" style="width:${85-i*7}%"></div>`).join('')}
+        </div>
+        <div class="preview-label">${page.label}</div>
+      </div>`;
+  } else {
+    body.innerHTML = `
+      <div class="preview-empty-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9cadc4" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="preview-empty-text">Click a page to preview it</div>`;
+  }
+}
+
+function renderExistingDocs() {
+  document.getElementById('existingDocItems').innerHTML = state.documents.map(doc => `
+    <div class="dd-item" data-doc-id="${doc.id}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      ${doc.name}
+      <span class="dd-count">${doc.pageCount} pages</span>
+    </div>
+  `).join('');
+  document.querySelectorAll('#existingDocItems [data-doc-id]').forEach(el => {
+    el.addEventListener('click', () => commitPages(parseInt(el.dataset.docId)));
+  });
+}
+
+function renderAll() {
+  renderDocList();
+  renderPages();
+  renderSelCount();
+  renderPreview();
+  renderExistingDocs();
+  rebindDocFolders();
+}
+
+// ─── Commit selected pages — dissolve then sequential cascade ────
+function commitPages(docId) {
+  const sel = state.pages.filter(p => p.selected);
+  if (!sel.length) return;
+
+  const doc = state.documents.find(d => d.id === docId);
+  const selectedIds = new Set(sel.map(p => p.id));
+
+  // 1. Snapshot positions of every thumb before anything changes
+  const grid = document.getElementById('pagesGrid');
+  const allThumbs = [...grid.querySelectorAll('.page-thumb')];
+  const beforeRects = new Map();
+  allThumbs.forEach(el => beforeRects.set(el.dataset.id, el.getBoundingClientRect()));
+
+  // 2. Kick off dissolve on selected thumbs
+  allThumbs.forEach(el => {
+    if (selectedIds.has(parseInt(el.dataset.id))) el.classList.add('dissolving');
+  });
+
+  const DISSOLVE_MS  = 240; // matches .dissolving transition duration
+  const STAGGER_MS   = 60;  // delay between each page's move start
+  const MOVE_MS      = 380; // each page's slide duration
+
+  setTimeout(() => {
+    // 3. Update state
+    doc.pageCount += sel.length;
+    if (state.previewId && selectedIds.has(state.previewId)) state.previewId = null;
+    state.pages = state.pages.filter(p => !p.selected);
+
+    // 4. Re-render everything (grid is now in final layout, no animations yet)
+    renderDocList();
+    renderSelCount();
+    renderPreview();
+    renderExistingDocs();
+    renderPages();   // DOM now reflects final positions
+
+    const newThumbs = [...document.getElementById('pagesGrid').querySelectorAll('.page-thumb')];
+
+    // 5. FLIP step 1: apply ALL inverse transforms at once with no transition,
+    //    so every page appears to sit at its old screen position simultaneously.
+    const flipData = [];
+    newThumbs.forEach(el => {
+      const id = el.dataset.id;
+      const oldRect = beforeRects.get(id);
+      if (!oldRect) return;
+      const newRect = el.getBoundingClientRect();
+      const dx = oldRect.left - newRect.left;
+      const dy = oldRect.top  - newRect.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return; // hasn't moved
+      el.style.transition = 'none';
+      el.style.transform  = `translate(${dx}px,${dy}px)`;
+      flipData.push(el);
+    });
+
+    // Force a single reflow so all transforms are applied before we start animating
+    if (flipData.length) grid.getBoundingClientRect();
+
+    // 6. FLIP step 2: release each element sequentially (left→right, top→bottom)
+    //    The DOM order of newThumbs already matches reading/flow order, so
+    //    iterating in index order gives the correct left→right, top→bottom cascade.
+    let seq = 0;
+    flipData.forEach(el => {
+      const delay = seq * STAGGER_MS;
+      seq++;
+      setTimeout(() => {
+        el.style.transition = `transform ${MOVE_MS}ms cubic-bezier(0.4, 0.0, 0.2, 1)`;
+        el.style.transform  = '';
+        el.addEventListener('transitionend', () => {
+          el.style.transition = '';
+          el.style.transform  = '';
+        }, { once: true });
+      }, delay);
+    });
+
+    // 7. Flash the target document in the left panel
+    const folderEl = document.querySelector(`.doc-folder[data-doc-id="${docId}"]`);
+    if (folderEl) {
+      folderEl.classList.add('drop-accept');
+      folderEl.addEventListener('animationend', () => folderEl.classList.remove('drop-accept'), { once: true });
+    }
+
+    showToast(`${sel.length} page${sel.length > 1 ? 's' : ''} added to "${doc.name}"`);
+  }, DISSOLVE_MS);
+}
+
+// ─── Pointer interactions ─────────────────────────────────
+let pointerState = null; // null | 'pending' | 'rubber' | 'drag'
+let pendingPageId = null;
+let dragStartX = 0, dragStartY = 0;
+let rubberStartX = 0, rubberStartY = 0;
+const DRAG_THRESHOLD = 5;
+
+function attachThumbListeners() {
+  document.querySelectorAll('.page-thumb').forEach(el => {
+    el.addEventListener('mousedown', onThumbMousedown);
+  });
+}
+
+function onThumbMousedown(e) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  const id = parseInt(e.currentTarget.dataset.id);
+  const idx = state.pages.findIndex(p => p.id === id);
+  const page = state.pages[idx];
+
+  if (e.shiftKey) {
+    // Shift+click: toggle selection, don't change preview
+    page.selected = !page.selected;
+    renderPages();
+    renderSelCount();
+    return;
+  }
+
+  // Any page can start a drag — track mousedown and wait to see if it's a click or drag
+  pointerState = 'pending';
+  pendingPageId = id;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  document.addEventListener('mousemove', onMousemoveGlobal);
+  document.addEventListener('mouseup', onMouseupGlobal);
+}
+
+// Mousedown on grid background (rubber-band)
+document.getElementById('gridWrap').addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  if (e.target.closest('.page-thumb')) return; // handled above
+  e.preventDefault();
+  // Clear selection on plain click on background
+  if (!e.shiftKey) {
+    state.pages.forEach(p => p.selected = false);
+  }
+  pointerState = 'rubber';
+  rubberStartX = e.clientX;
+  rubberStartY = e.clientY;
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  document.addEventListener('mousemove', onMousemoveGlobal);
+  document.addEventListener('mouseup', onMouseupGlobal);
+  renderPages();
+  renderSelCount();
+});
+
+function onMousemoveGlobal(e) {
+  const dx = e.clientX - dragStartX;
+  const dy = e.clientY - dragStartY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+
+  if (pointerState === 'pending') {
+    if (dist < DRAG_THRESHOLD) return;
+    // Dragging from a page thumb always initiates a drag (never rubber-band).
+    // If the page isn't already selected, temporarily select just it.
+    const page = state.pages.find(p => p.id === pendingPageId);
+    if (page && !page.selected) {
+      state.pages.forEach(p => p.selected = false);
+      page.selected = true;
+      renderPages();
+      renderSelCount();
+    }
+    pointerState = 'drag';
+    startDrag(e);
+  }
+
+  if (pointerState === 'rubber') {
+    updateRubberBand(e);
+  }
+
+  if (pointerState === 'drag') {
+    updateDragGhost(e);
+    updateDropTargets(e);
+  }
+}
+
+function onMouseupGlobal(e) {
+  if (pointerState === 'pending') {
+    // It was a plain click (no drag)
+    const page = state.pages.find(p => p.id === pendingPageId);
+    if (page) {
+      // Set preview, clear selection
+      state.previewId = page.id;
+      state.pages.forEach(p => p.selected = false);
+      renderPages();
+      renderSelCount();
+      renderPreview();
+    }
+  }
+
+  if (pointerState === 'rubber') {
+    endRubberBand();
+  }
+
+  if (pointerState === 'drag') {
+    endDrag(e);
+  }
+
+  pointerState = null;
+  pendingPageId = null;
+  document.removeEventListener('mousemove', onMousemoveGlobal);
+  document.removeEventListener('mouseup', onMouseupGlobal);
+}
+
+// ─── Rubber band ──────────────────────────────────────────
+function updateRubberBand(e) {
+  const wrap = document.getElementById('gridWrap');
+  const band = document.getElementById('rubberBand');
+  const wrapRect = wrap.getBoundingClientRect();
+  const scrollTop = wrap.scrollTop;
+
+  const x1 = rubberStartX - wrapRect.left;
+  const y1 = rubberStartY - wrapRect.top + scrollTop;
+  const x2 = e.clientX - wrapRect.left;
+  const y2 = e.clientY - wrapRect.top + scrollTop;
+
+  const left = Math.min(x1, x2);
+  const top = Math.min(y1, y2);
+  const width = Math.abs(x2 - x1);
+  const height = Math.abs(y2 - y1);
+
+  band.style.display = 'block';
+  band.style.left = left + 'px';
+  band.style.top = top + 'px';
+  band.style.width = width + 'px';
+  band.style.height = height + 'px';
+
+  // Hit-test all thumbs
+  const bandRect = { left: left + wrapRect.left, top: top + wrapRect.top - scrollTop, right: left + wrapRect.left + width, bottom: top + wrapRect.top - scrollTop + height };
+
+  document.querySelectorAll('.page-thumb').forEach(el => {
+    const id = parseInt(el.dataset.id);
+    const r = el.getBoundingClientRect();
+    const overlaps = r.left < bandRect.right && r.right > bandRect.left && r.top < bandRect.bottom && r.bottom > bandRect.top;
+    const page = state.pages.find(p => p.id === id);
+    if (page) {
+      page.selected = overlaps;
+      el.classList.toggle('selected', overlaps);
+    }
+  });
+
+  renderSelCount();
+}
+
+function endRubberBand() {
+  const band = document.getElementById('rubberBand');
+  band.style.display = 'none';
+  renderPages();
+  renderSelCount();
+}
+
+// ─── Drag ghost ───────────────────────────────────────────
+function startDrag(e) {
+  const sel = state.pages.filter(p => p.selected);
+  document.getElementById('ghostBadge').textContent = sel.length;
+  document.getElementById('dragGhost').style.display = 'block';
+  document.body.classList.add('dragging-active');
+  updateDragGhost(e);
+}
+
+function updateDragGhost(e) {
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.left = (e.clientX + 14) + 'px';
+  ghost.style.top  = (e.clientY - 20) + 'px';
+}
+
+function updateDropTargets(e) {
+  document.querySelectorAll('.doc-folder').forEach(el => {
+    const r = el.getBoundingClientRect();
+    const over = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    el.classList.toggle('drop-target', over);
+  });
+}
+
+function endDrag(e) {
+  document.getElementById('dragGhost').style.display = 'none';
+  document.body.classList.remove('dragging-active');
+
+  // Find drop target
+  const target = document.querySelector('.doc-folder.drop-target');
+  document.querySelectorAll('.doc-folder').forEach(el => el.classList.remove('drop-target'));
+
+  if (target) {
+    const docId = parseInt(target.dataset.docId);
+    commitPages(docId, target);
+  } else {
+    // Dropped on nothing — cancel, deselect
+    state.pages.forEach(p => p.selected = false);
+    renderPages();
+    renderSelCount();
+  }
+}
+
+// ─── Rebind doc folder click (for dropdown) ───────────────
+function rebindDocFolders() {
+  // (hover/drop handled via live event delegation already)
+}
+
+// ─── Dropdown ─────────────────────────────────────────────
+const addBtn = document.getElementById('addBtn');
+const dropdownMenu = document.getElementById('dropdownMenu');
+addBtn.addEventListener('click', e => { e.stopPropagation(); dropdownMenu.classList.toggle('open'); });
+document.addEventListener('click', () => dropdownMenu.classList.remove('open'));
+dropdownMenu.addEventListener('click', e => e.stopPropagation());
+
+document.getElementById('createNewBtn').addEventListener('click', () => {
+  const sel = state.pages.filter(p => p.selected);
+  document.getElementById('modalSubtitle').textContent = `${sel.length} page${sel.length > 1 ? 's' : ''} will be moved to the new document.`;
+  document.getElementById('docNameInput').value = `Document ${state.nextDocId}`;
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('docNameInput').select(), 50);
+  dropdownMenu.classList.remove('open');
+});
+
+// ─── Modal ────────────────────────────────────────────────
+document.getElementById('modalCancel').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
+document.getElementById('modalConfirm').addEventListener('click', () => {
+  const name = document.getElementById('docNameInput').value.trim();
+  if (!name) { document.getElementById('docNameInput').focus(); return; }
+  document.getElementById('modalOverlay').classList.remove('open');
+  // Create new doc entry, then commit
+  state.documents.push({ id: state.nextDocId, name, pageCount: 0 });
+  commitPages(state.nextDocId);
+  state.nextDocId++;
+});
+document.getElementById('docNameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('modalConfirm').click();
+  if (e.key === 'Escape') document.getElementById('modalCancel').click();
+});
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) document.getElementById('modalCancel').click();
+});
+
+// ─── Toast ────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ─── Init ─────────────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
